@@ -26,7 +26,7 @@ public class Boid : MonoBehaviour
         
         Debug.DrawRay(position, _target - (Vector2)position, Color.red);
 
-        Vector2 steeringForce = Seek(_target);
+        Vector2 steeringForce = Arrive(_target, DecelerationRate.Fast);
         if (_rb.velocity.sqrMagnitude < maxVelocity * maxVelocity)
         {
             var accel = steeringForce / _rb.mass;
@@ -58,4 +58,33 @@ public class Boid : MonoBehaviour
         }
         return -Seek(target);
     }
+
+    /// <summary>
+    /// Moves to and smoothly stops at a target.
+    /// </summary>
+    /// <param name="target">The target to stop at.</param>
+    /// <param name="decelerationRate">The rate to decelerate at (modified).</param>
+    /// <returns>The force that needs to be applied.</returns>
+    Vector2 Arrive(Vector2 target, DecelerationRate decelerationRate)
+    {
+        var direction = target - (Vector2)transform.position;
+        var distance = direction.magnitude;
+
+        if (distance > Constants.MinFloatDistance)
+        {
+            const float decelerationModifier = 0.3f;
+            var speed = distance / ((int)decelerationRate * decelerationModifier);
+            var desiredVelocity = direction * speed / distance;
+            return desiredVelocity - _rb.velocity;
+        }
+
+        return Vector2.zero;
+    }
+}
+
+public enum DecelerationRate
+{
+    Fast = 1,
+    Normal = 2,
+    Slow = 3
 }
