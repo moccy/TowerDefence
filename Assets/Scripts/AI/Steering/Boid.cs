@@ -142,18 +142,3 @@ public class Boid : MonoBehaviour
         return Seek(target.position + target.velocity * lookAheadTime);
     }
 }
-
-public enum SteeringBehaviour
-{
-    Seek,
-    Flee,
-    Arrive,
-    Pursuit
-}
-
-public enum DecelerationRate
-{
-    Fast = 1,
-    Normal = 2,
-    Slow = 3
-}
