@@ -2,9 +2,11 @@ using UnityEngine;
 
 public class Boid : MonoBehaviour
 {
+    public Rigidbody2D target;
+    public SteeringBehaviour[] steeringBehaviours;
+    public DecelerationRate decelerationRate = DecelerationRate.Normal;
     public float maxVelocity;
     private Rigidbody2D _rb;
-    private Vector2 _target;
     private Camera _mainCamera;
     
     void Start()
@@ -16,39 +18,77 @@ public class Boid : MonoBehaviour
     void Update()
     {
         var position = transform.position;
-
-        if (Input.GetMouseButton(0))
-        {
-            _target = _mainCamera.ScreenToWorldPoint(Input.mousePosition);
-        }
-
-        if (_target == default) return;
         
-        Debug.DrawRay(position, _target - (Vector2)position, Color.red);
-
-        Vector2 steeringForce = Arrive(_target, DecelerationRate.Fast);
+        Debug.DrawRay(position, target.position - (Vector2)position, Color.red);
+        
+        var steeringForce = CalculateSteeringForce();
+        
         if (_rb.velocity.sqrMagnitude < maxVelocity * maxVelocity)
         {
             var accel = steeringForce / _rb.mass;
             _rb.velocity += accel * Time.deltaTime;
             
-            var direction = (_target - (Vector2)position).normalized;
+            var direction = (target.position - (Vector2)position).normalized;
             var angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg - 90f;
             transform.rotation = Quaternion.AngleAxis(angle, Vector3.forward);
         }
     }
 
+    private Vector2 CalculateSteeringForce()
+    {
+        var force = Vector2.zero;
+        
+        foreach (var steeringBehaviour in steeringBehaviours)
+        {
+            switch (steeringBehaviour)
+            {
+                case SteeringBehaviour.Arrive:
+                    force += Arrive(target.position, decelerationRate);
+                    break;
+                case SteeringBehaviour.Flee:
+                    force += Flee(target.position);
+                    break;
+                case SteeringBehaviour.Seek:
+                    force += Seek(target.position);
+                    break;
+                case SteeringBehaviour.Pursuit:
+                    force += Pursuit(target);
+                    break;
+                default:
+                    continue;
+            }
+        }
+
+        return force;
+    }
+
+    /// <summary>
+    /// Seeks out a target. Effectively heading straight towards the targets current position.
+    /// </summary>
+    /// <param name="target">The target to seek.</param>
+    /// <returns>The force needed to seek the target.</returns>
     Vector2 Seek(Vector2 target)
     {
         var desiredVelocity = (target - (Vector2)transform.position).normalized * maxVelocity;
         return desiredVelocity - _rb.velocity;
     }
 
+    /// <summary>
+    /// Flees from a target. The opposite of Seek.
+    /// </summary>
+    /// <param name="target">The target to flee from.</param>
+    /// <returns>The force that needs to be applied to flee.</returns>
     Vector2 Flee(Vector2 target)
     {
         return -Seek(target);
     }
     
+    /// <summary>
+    /// Flees from a target, but only applies a force if the target is within the panic distance.
+    /// </summary>
+    /// <param name="target">The target to flee from.</param>
+    /// <param name="panicDistance">The maximum distance between the target and the boid to apply a force.</param>
+    /// <returns>The force that needs to be applied to flee.</returns>
     Vector2 Flee(Vector2 target, double panicDistance)
     {
         var distance = (target - (Vector2)transform.position).sqrMagnitude;
@@ -64,7 +104,7 @@ public class Boid : MonoBehaviour
     /// </summary>
     /// <param name="target">The target to stop at.</param>
     /// <param name="decelerationRate">The rate to decelerate at (modified).</param>
-    /// <returns>The force that needs to be applied.</returns>
+    /// <returns>The force that needs to be applied to arrive.</returns>
     Vector2 Arrive(Vector2 target, DecelerationRate decelerationRate)
     {
         var direction = target - (Vector2)transform.position;
@@ -101,6 +141,14 @@ public class Boid : MonoBehaviour
         var lookAheadTime = directionToTarget.magnitude / (maxVelocity + target.velocity.magnitude);
         return Seek(target.position + target.velocity * lookAheadTime);
     }
+}
+
+public enum SteeringBehaviour
+{
+    Seek,
+    Flee,
+    Arrive,
+    Pursuit
 }
 
 public enum DecelerationRate
