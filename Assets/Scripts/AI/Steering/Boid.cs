@@ -80,6 +80,27 @@ public class Boid : MonoBehaviour
 
         return Vector2.zero;
     }
+
+    /// <summary>
+    /// Pursues a target by predicting its future position based on the targets velocity.
+    /// </summary>
+    /// <param name="target">The target to pursue.</param>
+    /// <returns>The force needed to pursue the target.</returns>
+    Vector2 Pursuit(Rigidbody2D target)
+    {
+        // If the target is ahead and facing us, then just head towards its position.
+        var directionToTarget = target.position - (Vector2)transform.position;
+
+        var headingAngle = Vector2.Dot(_rb.velocity.normalized, target.velocity.normalized);
+
+        if (Vector2.Dot(directionToTarget, _rb.velocity.normalized) > 0 && headingAngle < -0.95f)
+        {
+            return Seek(target.position);
+        }
+
+        var lookAheadTime = directionToTarget.magnitude / (maxVelocity + target.velocity.magnitude);
+        return Seek(target.position + target.velocity * lookAheadTime);
+    }
 }
 
 public enum DecelerationRate
