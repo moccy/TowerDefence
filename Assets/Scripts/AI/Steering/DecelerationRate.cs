@@ -1,6 +1,9 @@
-﻿public enum DecelerationRate
+﻿namespace AI.Steering
 {
-    Fast = 1,
-    Normal = 2,
-    Slow = 3
+    public enum DecelerationRate
+    {
+        Fast = 1,
+        Normal = 2,
+        Slow = 3
+    }
 }

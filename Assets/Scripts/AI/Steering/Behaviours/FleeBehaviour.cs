@@ -1,24 +1,27 @@
 using UnityEngine;
 
-/// <summary>
-/// Flees from a target. The opposite of Seek.
-/// </summary>
-public class FleeBehaviour : SteeringBehaviour
+namespace AI.Steering.Behaviours
 {
     /// <summary>
-    /// The maximum distance between the target and the boid to apply a force.
-    /// Ignored if 0.
+    /// Flees from a target. The opposite of Seek.
     /// </summary>
-    public float panicDistance;
-    
-    public override Vector2 GetSteeringForce(Rigidbody2D self, Rigidbody2D target, float maxVelocity)
+    public class FleeBehaviour : SteeringBehaviour
     {
-        var distance = (target.position - self.position).sqrMagnitude;
-        if (distance > panicDistance * panicDistance)
+        /// <summary>
+        /// The maximum distance between the target and the boid to apply a force.
+        /// Ignored if 0.
+        /// </summary>
+        public float panicDistance;
+    
+        public override Vector2 GetSteeringForce(Rigidbody2D self, Rigidbody2D target, float maxVelocity)
         {
-            return Vector2.zero;
-        }
+            var distance = (target.position - self.position).sqrMagnitude;
+            if (distance > panicDistance * panicDistance)
+            {
+                return Vector2.zero;
+            }
 
-        return Flee(self, target.position, maxVelocity);
+            return Flee(self, target.position, maxVelocity);
+        }
     }
 }
